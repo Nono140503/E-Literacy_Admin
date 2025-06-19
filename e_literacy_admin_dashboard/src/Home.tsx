@@ -1,10 +1,36 @@
-// The exported code uses standard Tailwind CSS. Ensure Tailwind is properly configured in your React app.
+// The exported code uses Tailwind CSS. Install Tailwind CSS in your dev environment to ensure all styles work.
+
 import React, { useState, useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
-import Settings from './components/Settings.tsx';
-import PDFReport from './components/PDFReport.tsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faChartLine, 
+  faFileAlt, 
+  faLightbulb, 
+  faCog, 
+  faSignOutAlt, 
+  faBell, 
+  faSun, 
+  faMoon, 
+  faChevronLeft, 
+  faChevronRight, 
+  faSyncAlt, 
+  faEllipsisV, 
+  faDownload, 
+  faFilter, 
+  faArrowUp, 
+  faUsers, 
+  faStar, 
+  faStarHalfAlt, 
+  faAward, 
+  faTimes, 
+  faChevronDown 
+} from '@fortawesome/free-solid-svg-icons';
 import 'swiper/css';
 import 'swiper/css/pagination';
+import 'swiper/css/autoplay';
+import Settings from './components/Settings.tsx';
+import PDFReport from './components/PDFReport.tsx';
 
 // Type definitions
 type NavItem = "Dashboard" | "Reports" | "User Insights" | "Settings";
@@ -33,6 +59,10 @@ interface Stats {
     advancedLevel: number;
 }
 
+const newGradientStyle = {
+  background: 'linear-gradient(to bottom, #ff9800, #ff512f)',
+};
+
 const Home: React.FC<HomeProps> = ({ onLogout }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
@@ -49,6 +79,8 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const pdfReportRef = useRef<HTMLDivElement>(null);
   const [notification, setNotification] = useState<NotificationState>({ show: false, message: '', type: '' });
+  const [showDropdown, setShowDropdown] = useState<string | null>(null);
+  const [hoveredDropdown, setHoveredDropdown] = useState<{ type: string, value: string } | null>(null);
 
   const navIcons: Record<NavItem, string> = {
     "Dashboard": "chart-line",
@@ -82,23 +114,72 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
       barChartInstance.current = echarts.init(barChartRef.current);
       const barOption: echarts.EChartsOption = {
         animation: false,
-        tooltip: { trigger: 'axis' },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          borderColor: isDarkMode ? '#555' : '#ddd',
+          textStyle: {
+            color: isDarkMode ? '#fff' : '#333'
+          }
+        },
+        grid: {
+          left: '5%',
+          right: '5%',
+          top: '10%',
+          bottom: '10%',
+          containLabel: true
+        },
         xAxis: {
           type: 'category',
           data: ['Beginner', 'Intermediate', 'Advanced'],
-          axisLabel: { color: isDarkMode ? '#fff' : '#333' },
+          axisLabel: {
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+            fontSize: 12
+          },
+          axisLine: {
+            lineStyle: {
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'
+            }
+          },
+          axisTick: {
+            alignWithLabel: true,
+            lineStyle: {
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'
+            }
+          }
         },
         yAxis: {
           type: 'value',
-          axisLabel: { color: isDarkMode ? '#fff' : '#333' },
-        },
-        series: [
-          {
-            data: [8923, 10234, 5410],
-            type: 'bar',
-            itemStyle: { color: '#E67012' },
+          axisLabel: {
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+            fontSize: 12
           },
-        ],
+          splitLine: {
+            lineStyle: {
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+            }
+          }
+        },
+        series: [{
+          data: [8923, 10234, 5410],
+          type: 'bar',
+          barWidth: '50%',
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#f7b733' },
+              { offset: 1, color: '#fc4a1a' }
+            ]),
+            borderRadius: [4, 4, 0, 0]
+          },
+          emphasis: {
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#e0a62e' },
+                { offset: 1, color: '#e33f16' }
+              ])
+            }
+          }
+        }]
       };
       barChartInstance.current.setOption(barOption);
     }
@@ -111,28 +192,53 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
       pieChartInstance.current = echarts.init(pieChartRef.current);
       const pieOption: echarts.EChartsOption = {
         animation: false,
-        tooltip: { trigger: 'item' },
-        series: [
-          {
-            type: 'pie',
-            radius: '70%',
-            data: [
-              { value: 35, name: '18-25' },
-              { value: 30, name: '26-35' },
-              { value: 20, name: '36-45' },
-              { value: 15, name: '46+' },
-            ],
-            label: {
-              color: isDarkMode ? '#fff' : '#333'
-            },
-            itemStyle: {
-              color: (params: any) => {
-                const colors = ['#E67012', '#3498DB', '#2ECC71', '#E74C3C'];
-                return colors[params.dataIndex];
-              },
-            },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}: {c} ({d}%)',
+          backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          borderColor: isDarkMode ? '#555' : '#ddd',
+          textStyle: {
+            color: isDarkMode ? '#fff' : '#333'
+          }
+        },
+        legend: {
+          orient: 'vertical',
+          right: '5%',
+          top: 'center',
+          textStyle: {
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)'
+          }
+        },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['40%', '50%'],
+          avoidLabelOverlap: false,
+          itemStyle: {
+            borderRadius: 6,
+            borderColor: isDarkMode ? '#1F2937' : '#fff',
+            borderWidth: 2
           },
-        ],
+          label: {
+            show: false
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: '14',
+              fontWeight: 'bold'
+            }
+          },
+          labelLine: {
+            show: false
+          },
+          data: [
+            { value: 35, name: '18-25', itemStyle: { color: '#6366F1' } },
+            { value: 30, name: '26-35', itemStyle: { color: '#8B5CF6' } },
+            { value: 20, name: '36-45', itemStyle: { color: '#EC4899' } },
+            { value: 15, name: '46+', itemStyle: { color: '#F59E0B' } }
+          ]
+        }]
       };
       pieChartInstance.current.setOption(pieOption);
     }
@@ -544,66 +650,219 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
       case 'Dashboard':
         return (
           <>
+            {/* Welcome Banner */}
+            <div
+              className="mb-8 rounded-xl p-6 shadow-lg"
+              style={{
+                background: 'linear-gradient(to right, #ff9800, #ff512f)',
+              }}
+            >
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="text-white">
+                  <h1 className="text-2xl font-bold mb-2">Welcome back, Alexander!</h1>
+                  <p className="opacity-80">Here's what's happening with your literacy program today.</p>
+                </div>
+              </div>
+            </div>
+
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {[
-                { label: 'Total Users', value: stats.totalUsers, icon: 'users' },
-                { label: 'Beginner Level', value: stats.beginnerLevel, icon: 'star' },
-                { label: 'Intermediate', value: stats.intermediateLevel, icon: 'star-half-alt' },
-                { label: 'Advanced', value: stats.advancedLevel, icon: 'stars' },
-              ].map((stat) => (
-                <div key={stat.label} className={`p-4 rounded-lg ${isDarkMode ? 'bg-[#2E2E2E]' : 'bg-white'} shadow-lg hover:shadow-[#E6701240] hover:border-[#E67012] border-2 border-transparent transition-all duration-300`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-500">{stat.label}</p>
-                      <h3 className="text-xl font-bold">{stat.value.toLocaleString()}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="p-6 rounded-xl shadow-lg flex flex-col justify-between" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Total Users</p>
+                    <h3 className="text-2xl font-bold mt-1">{stats.totalUsers.toLocaleString()}</h3>
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs text-green-500 font-medium flex items-center">
+                        <FontAwesomeIcon icon={faArrowUp} className="mr-1" /> 12.5%
+                      </span>
+                      <span className="text-xs text-gray-400 ml-2">vs last month</span>
                     </div>
-                    <i className={`fas fa-${stat.icon} text-xl text-[#E67012]`}></i>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                    <FontAwesomeIcon icon={faUsers} className="text-2xl" />
                   </div>
                 </div>
-              ))}
+              </div>
+              <div className="p-6 rounded-xl shadow-lg flex flex-col justify-between" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Beginner Level</p>
+                    <h3 className="text-2xl font-bold mt-1">{stats.beginnerLevel.toLocaleString()}</h3>
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs text-green-500 font-medium flex items-center">
+                        <FontAwesomeIcon icon={faArrowUp} className="mr-1" /> 12.5%
+                      </span>
+                      <span className="text-xs text-gray-400 ml-2">vs last month</span>
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white">
+                    <FontAwesomeIcon icon={faStar} className="text-2xl" />
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 rounded-xl shadow-lg flex flex-col justify-between" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Intermediate</p>
+                    <h3 className="text-2xl font-bold mt-1">{stats.intermediateLevel.toLocaleString()}</h3>
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs text-green-500 font-medium flex items-center">
+                        <FontAwesomeIcon icon={faArrowUp} className="mr-1" /> 12.5%
+                      </span>
+                      <span className="text-xs text-gray-400 ml-2">vs last month</span>
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white">
+                    <FontAwesomeIcon icon={faStar} className="text-2xl" />
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 rounded-xl shadow-lg flex flex-col justify-between" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Advanced</p>
+                    <h3 className="text-2xl font-bold mt-1">{stats.advancedLevel.toLocaleString()}</h3>
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs text-green-500 font-medium flex items-center">
+                        <FontAwesomeIcon icon={faArrowUp} className="mr-1" /> 12.5%
+                      </span>
+                      <span className="text-xs text-gray-400 ml-2">vs last month</span>
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-orange-400 flex items-center justify-center text-white">
+                    <FontAwesomeIcon icon={faAward} className="text-2xl" />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-6">
-              {[
-                { label: 'Province', value: selectedProvince, setValue: setSelectedProvince, options: ['Provinces: All Provinces', 'Gauteng', 'Western Cape', 'KwaZulu-Natal'] },
-                { label: 'Age Range', value: selectedAge, setValue: setSelectedAge, options: ['Ages: All Ages', '18-25', '26-35', '36-45', '46+'] },
-                { label: 'Skill Level', value: selectedSkill, setValue: setSelectedSkill, options: ['Skill Levels: All Levels', 'Beginner', 'Intermediate', 'Advanced'] },
-              ].map((filter) => (
-                <div key={filter.label} className="relative">
-                  <select
-                    value={filter.value}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => filter.setValue(e.target.value)}
-                    className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-[#2E2E2E] text-white' : 'bg-white text-gray-800'} shadow-md hover:shadow-[#E6701240] transition-all appearance-none pr-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E67012]`}
-                  >
-                    {filter.options.map((option) => (
-                      <option key={option} value={option} className={isDarkMode ? 'bg-[#2E2E2E]' : 'bg-white'}>
+            <div className="flex flex-wrap items-center gap-4 mb-8">
+              {/* Province Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(showDropdown === 'province' ? null : 'province')}
+                  className="flex items-center px-5 py-3 rounded-xl shadow border border-gray-200 focus:outline-none min-w-[200px] text-sm"
+                  style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}
+                >
+                  <span className="font-medium mr-1">Province:</span>
+                  <span className="font-medium mr-2" style={isDarkMode ? { color: '#ff9800' } : { color: '#e67012' }}>{selectedProvince}</span>
+                  <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-xs" />
+                </button>
+                {showDropdown === 'province' && (
+                  <div className="absolute left-0 mt-2 w-full rounded-xl shadow-lg border z-10"
+                    style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}>
+                    {["All Provinces", "Gauteng", "Western Cape", "KwaZulu-Natal", "Eastern Cape", "Free State"].map(option => (
+                      <div
+                        key={option}
+                        onClick={() => { setSelectedProvince(option); setShowDropdown(null); }}
+                        onMouseEnter={() => isDarkMode && setHoveredDropdown({ type: 'province', value: option })}
+                        onMouseLeave={() => isDarkMode && setHoveredDropdown(null)}
+                        className={`px-5 py-2 cursor-pointer text-sm ${!isDarkMode ? 'hover:bg-gray-50' : ''} ${selectedProvince === option ? (isDarkMode ? 'text-orange-400 font-semibold' : 'text-orange-600 font-semibold') : ''}`}
+                        style={isDarkMode ? {
+                          color: '#fff',
+                          background: hoveredDropdown && hoveredDropdown.type === 'province' && hoveredDropdown.value === option ? 'rgba(70,70,70,0.95)' : 'rgba(50,50,50,0.9)'
+                        } : {}}
+                      >
                         {option}
-                      </option>
+                      </div>
                     ))}
-                  </select>
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <i className="fas fa-chevron-down text-[#E67012]"></i>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
+              {/* Age Range Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(showDropdown === 'age' ? null : 'age')}
+                  className="flex items-center px-5 py-3 rounded-xl shadow border border-gray-200 focus:outline-none min-w-[200px] text-sm"
+                  style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}
+                >
+                  <span className="font-medium mr-1">Age Range:</span>
+                  <span className="font-medium mr-2" style={isDarkMode ? { color: '#ff9800' } : { color: '#e67012' }}>{selectedAge}</span>
+                  <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-xs" />
+                </button>
+                {showDropdown === 'age' && (
+                  <div className="absolute left-0 mt-2 w-full rounded-xl shadow-lg border z-10"
+                    style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}>
+                    {["All Ages", "18-25", "26-35", "36-45", "46+"].map(option => (
+                      <div
+                        key={option}
+                        onClick={() => { setSelectedAge(option); setShowDropdown(null); }}
+                        onMouseEnter={() => isDarkMode && setHoveredDropdown({ type: 'age', value: option })}
+                        onMouseLeave={() => isDarkMode && setHoveredDropdown(null)}
+                        className={`px-5 py-2 cursor-pointer text-sm ${!isDarkMode ? 'hover:bg-gray-50' : ''} ${selectedAge === option ? (isDarkMode ? 'text-orange-400 font-semibold' : 'text-orange-600 font-semibold') : ''}`}
+                        style={isDarkMode ? {
+                          color: '#fff',
+                          background: hoveredDropdown && hoveredDropdown.type === 'age' && hoveredDropdown.value === option ? 'rgba(70,70,70,0.95)' : 'rgba(50,50,50,0.9)'
+                        } : {}}
+                      >
+                        {option}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Skill Level Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(showDropdown === 'skill' ? null : 'skill')}
+                  className="flex items-center px-5 py-3 rounded-xl shadow border border-gray-200 focus:outline-none min-w-[200px] text-sm"
+                  style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}
+                >
+                  <span className="font-medium mr-1">Skill Level:</span>
+                  <span className="font-medium mr-2" style={isDarkMode ? { color: '#ff9800' } : { color: '#e67012' }}>{selectedSkill}</span>
+                  <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-xs" />
+                </button>
+                {showDropdown === 'skill' && (
+                  <div className="absolute left-0 mt-2 w-full rounded-xl shadow-lg border z-10"
+                    style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}>
+                    {["All Levels", "Beginner", "Intermediate", "Advanced"].map(option => (
+                      <div
+                        key={option}
+                        onClick={() => { setSelectedSkill(option); setShowDropdown(null); }}
+                        onMouseEnter={() => isDarkMode && setHoveredDropdown({ type: 'skill', value: option })}
+                        onMouseLeave={() => isDarkMode && setHoveredDropdown(null)}
+                        className={`px-5 py-2 cursor-pointer text-sm ${!isDarkMode ? 'hover:bg-gray-50' : ''} ${selectedSkill === option ? (isDarkMode ? 'text-orange-400 font-semibold' : 'text-orange-600 font-semibold') : ''}`}
+                        style={isDarkMode ? {
+                          color: '#fff',
+                          background: hoveredDropdown && hoveredDropdown.type === 'skill' && hoveredDropdown.value === option ? 'rgba(70,70,70,0.95)' : 'rgba(50,50,50,0.9)'
+                        } : {}}
+                      >
+                        {option}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* More Filters Button */}
+              <div className="flex-1 flex justify-end min-w-[180px]">
+                <button
+                  className="flex items-center px-5 py-3 rounded-xl shadow border border-gray-200 text-sm"
+                  style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}
+                  onMouseEnter={e => { if (isDarkMode) e.currentTarget.style.background = 'rgba(70,70,70,0.95)'; }}
+                  onMouseLeave={e => { if (isDarkMode) e.currentTarget.style.background = 'rgba(50,50,50,0.9)'; }}
+                >
+                  <FontAwesomeIcon icon={faFilter} className="mr-2 text-lg text-gray-500" />
+                  More Filters
+                </button>
+              </div>
             </div>
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-[#2E2E2E]' : 'bg-white'} shadow-lg`}>
+              <div className="p-6 rounded-xl shadow-lg mb-8" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
                 <h3 className="text-base font-bold mb-3">Literacy Level Distribution</h3>
                 <div ref={barChartRef} style={{ height: '250px' }}></div>
               </div>
-              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-[#2E2E2E]' : 'bg-white'} shadow-lg`}>
+              <div className="p-6 rounded-xl shadow-lg mb-8" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
                 <h3 className="text-base font-bold mb-3">Age Demographics</h3>
                 <div ref={pieChartRef} style={{ height: '250px' }}></div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap justify-end gap-3">
+            <div className="flex flex-wrap justify-end gap-3 mb-8">
               <button
                 onClick={() => setShowExportModal(true)}
                 className="px-4 py-2 bg-[#E67012] text-white rounded-lg shadow-lg hover:shadow-[#E6701240] text-sm"
@@ -617,6 +876,74 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
                 View Detailed Stats
               </button>
             </div>
+
+            {/* Recent Activity Section (below Download Report) */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 mb-10 text-sm" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff' } : {}}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold" style={isDarkMode ? { color: '#fff' } : { color: '#1a202c' }}>Recent Activity</h3>
+                <button className="font-medium hover:underline text-sm" style={isDarkMode ? { color: '#ff9800' } : { color: '#e67012' }}>View All</button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={isDarkMode ? { color: '#e0e0e0' } : {}}>
+                      <th className="pb-3 font-medium text-left">User</th>
+                      <th className="pb-3 font-medium text-left">Activity</th>
+                      <th className="pb-3 font-medium text-left">Progress</th>
+                      <th className="pb-3 font-medium text-left">Date</th>
+                      <th className="pb-3 font-medium text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {[
+                      { user: 'Sarah Johnson', activity: 'Completed Module 3', progress: 75, date: '2025-06-15', status: 'Completed' },
+                      { user: 'Michael Brown', activity: 'Started Assessment', progress: 45, date: '2025-06-14', status: 'In Progress' },
+                      { user: 'Emily Davis', activity: 'Joined Program', progress: 10, date: '2025-06-13', status: 'New' },
+                      { user: 'David Wilson', activity: 'Completed Module 2', progress: 60, date: '2025-06-12', status: 'Completed' }
+                    ].map((item, idx) => (
+                      <tr
+                        key={idx}
+                        style={isDarkMode ? {
+                          background: 'rgba(50,50,50,0.0)',
+                          color: '#fff',
+                          borderBottom: '1px solid #333'
+                        } : {}}
+                      >
+                        <td className="py-4 text-sm">
+                          <div className="flex items-center">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                              {item.user.charAt(0)}
+                            </div>
+                            <span className="ml-3 font-semibold" style={isDarkMode ? { color: '#fff' } : { color: '#1a202c' }}>{item.user}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-sm">{item.activity}</td>
+                        <td className="py-4 text-sm">
+                          <div className="flex items-center min-w-[120px]">
+                            <div className="flex-1 h-2 rounded-full mr-2 overflow-hidden" style={isDarkMode ? { background: '#b0b0b0' } : { background: '#e5e7eb' }}>
+                              <div className="h-2 rounded-full bg-orange-500" style={{ width: `${item.progress}%` }}></div>
+                            </div>
+                            <span className="ml-1 font-semibold text-sm mr-3" style={isDarkMode ? { color: '#fff' } : { color: '#1a202c' }}>{item.progress}%</span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-sm">{item.date}</td>
+                        <td className="py-4 text-sm">
+                          {item.status === 'Completed' && (
+                            <span style={isDarkMode ? { background: '#1e3a1e', color: '#7fffaf' } : { background: '#d1fae5', color: '#059669' }} className="px-3 py-1 rounded-full text-xs font-semibold text-sm">Completed</span>
+                          )}
+                          {item.status === 'In Progress' && (
+                            <span style={isDarkMode ? { background: '#3a2e1e', color: '#ffe680' } : { background: '#fef3c7', color: '#b45309' }} className="px-3 py-1 rounded-full text-xs font-semibold text-sm">In Progress</span>
+                          )}
+                          {item.status === 'New' && (
+                            <span style={isDarkMode ? { background: '#1e2740', color: '#a5b4fc' } : { background: '#dbeafe', color: '#2563eb' }} className="px-3 py-1 rounded-full text-xs font-semibold text-sm">New</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </>
         );
       default:
@@ -625,91 +952,71 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      width: '100%',
-      backgroundColor: isDarkMode ? '#141414' : '#f3f4f6',
-      color: isDarkMode ? '#ffffff' : '#1f2937'
-    }}>
-      {/* Sidebar */}
-      <div style={{
-        position: 'fixed',
-        left: 0,
-        top: 0,
+    <div
+      style={{
         height: '100vh',
-        width: isMenuCollapsed ? '4rem' : '14rem',
-        backgroundColor: '#272727',
-        transition: 'all 0.3s',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        zIndex: 50
-      }}>
+        width: '100vw',
+        backgroundColor: isDarkMode ? '#141414' : '#f3f4f6',
+        color: isDarkMode ? '#ffffff' : '#1f2937',
+        display: 'flex',
+        flexDirection: 'row'
+      }}
+    >
+      {/* Sidebar */}
+      <div className={`fixed left-0 top-0 h-full ${isMenuCollapsed ? 'w-15' : 'w-64'} transition-all duration-300 shadow-xl z-50 text-sm`} style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : newGradientStyle}>
         <div className="p-2 flex items-center justify-between">
-          <img src="../src/assets/Logo_transparent.png" alt="Logo" className="w-10 h-10" />
-          {!isMenuCollapsed && <span style={{ color: '#E67012' }} className="font-bold text-sm">E-Literacy</span>}
-          <button onClick={() => setIsMenuCollapsed(!isMenuCollapsed)} style={{ color: '#E67012' }} className="text-sm">
-            <i className={`fas fa-${isMenuCollapsed ? 'chevron-right' : 'chevron-left'}`}></i>
+          <div className="flex items-center">
+            {!isMenuCollapsed && <span className="text-white font-bold ml-5 text-lg mt-5">E-Literacy</span>}
+          </div>
+          <button
+            onClick={() => setIsMenuCollapsed(!isMenuCollapsed)}
+            className="text-gray-300 hover:text-white cursor-pointer p-1 rounded-full hover:bg-white/10 transition-all"
+          >
+            <FontAwesomeIcon icon={isMenuCollapsed ? faChevronRight : faChevronLeft} />
           </button>
         </div>
-
-        <nav className="mt-10 flex flex-col h-[calc(100vh-6rem)] justify-between">
+        <div className="mt-8 flex flex-col h-[calc(100vh-8rem)] justify-between text-sm">
           <div>
-            {(Object.keys(navIcons) as NavItem[]).map((item) => (
+            {[
+              { name: 'Dashboard', icon: faChartLine },
+              { name: 'Reports', icon: faFileAlt },
+              { name: 'User Insights', icon: faLightbulb },
+              { name: 'Settings', icon: faCog }
+            ].map((item) => (
               <div
-                key={item}
-                onClick={() => handleNavClick(item)}
-                style={{
-                  padding: '0.75rem 1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: activeNav === item ? '#ffffff' : '#d1d5db',
-                  backgroundColor: activeNav === item ? 'rgba(230, 112, 18, 0.2)' : 'transparent',
-                  borderLeft: `4px solid ${activeNav === item ? '#E67012' : 'transparent'}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
+                key={item.name}
+                onClick={() => setActiveNav(item.name as NavItem)}
+                className={`px-4 py-3 flex items-center cursor-pointer transition-all duration-200 rounded-lg mb-2
+                  ${activeNav === item.name ? (isDarkMode ? 'bg-white/20 border-l-4' : 'bg-white/20 border-l-4 border-yellow-400') + ' text-white font-bold shadow' : 'text-gray-100 hover:bg-white/10'}
+                  ${isMenuCollapsed ? 'justify-center' : ''}`}
+                style={activeNav === item.name && isDarkMode ? { borderLeft: '4px solid #E67012' } : {}}
               >
-                <i className={`fas fa-${navIcons[item]} ${activeNav === item ? 'text-[#E67012]' : ''} ml-4`}></i>
-                {!isMenuCollapsed && (
-                  <span className={`ml-2 ${activeNav === item ? 'text-[#E67012] font-medium' : ''}`}>
-                    {item}
-                  </span>
-                )}
+                <FontAwesomeIcon icon={item.icon} className={isMenuCollapsed ? 'text-xl' : 'w-6'} />
+                {!isMenuCollapsed && <span className="ml-3">{item.name}</span>}
               </div>
             ))}
           </div>
-          <div>
-            <div
-              onClick={onLogout}
-              style={{
-                padding: '0.75rem 1rem',
-                display: 'flex',
-                alignItems: 'center',
-                color: '#d1d5db',
-                borderLeft: `4px solid transparent`,
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              className='hover:bg-[rgba(230,112,18,0.2)]'
-            >
-              <i className={`fas fa-sign-out-alt ml-4`}></i>
-              {!isMenuCollapsed && (
-                <span className={`ml-2`}>
-                  Logout
-                </span>
-              )}
+          {!isMenuCollapsed && (
+            <div className="mb-8 px-4">
+              <div
+                className="p-3 bg-white/10 rounded-lg flex items-center text-gray-100 hover:bg-white/20 cursor-pointer transition-all"
+                onClick={onLogout}
+              >
+                <FontAwesomeIcon icon={faSignOutAlt} className="w-6" />
+                <span className="ml-3">Logout</span>
+              </div>
             </div>
-          </div>
-        </nav>
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
-      <div style={{
-        marginLeft: isMenuCollapsed ? '4rem' : '14rem',
-        padding: '1rem',
-        transition: 'all 0.3s'
-      }}>
+      <div
+        className={`${isMenuCollapsed ? 'ml-20' : 'ml-64'} pl-8 pr-8 transition-all duration-300 text-base`}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}
+      >
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 pt-7">
           {activeNav !== 'Settings' && (
             <div className="flex items-center space-x-3">
               <img src={profileImage} alt="Profile" className="w-10 h-10 rounded-full border-2 border-[#E67012]" id='profile-image'/>

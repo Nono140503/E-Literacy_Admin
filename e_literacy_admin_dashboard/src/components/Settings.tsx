@@ -115,7 +115,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
   };
 
   return (
-    <div className="p-6 space-y-1 max-w-3xl mx-auto" id='settings-container'>
+    <div className="p-6 max-w-3xl mr-50" id='settings-container' style={{ marginTop: '-32px' }}>
       {/* Profile Section */}
       <div className="flex flex-col items-center mb-12">
         <div className="relative">
@@ -151,7 +151,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
         <button 
           onClick={handleImageClick}
           style={{ color: '#E67012' }}
-          className="hover:text-[#ff8a3d] transition-colors flex items-center space-x-2"
+          className="hover:text-[#ff8a3d] transition-colors flex items-center space-x-2 text-sm"
         >
           <i className="fas fa-pencil-alt"></i>
           <span>Edit Profile Picture</span>
@@ -162,8 +162,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
       <div className="space-y-3">
         {/* General Settings */}
         <button 
-          className={`w-full p-4 rounded-lg shadow hover:border-[#E67012] border border-transparent 
-            transition-all duration-300 flex items-center`}
+          className={`w-full p-4 rounded-lg shadow hover:border-[#E67012] border border-transparent transition-all duration-300 flex items-center text-sm`}
           style={{ 
             backgroundColor: isDarkMode ? '#2E2E2E' : '#FFFFFF',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
@@ -176,8 +175,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
 
         {/* Notification Settings */}
         <button 
-          className={`w-full p-4 rounded-lg shadow hover:border-[#E67012] border border-transparent 
-            transition-all duration-300 flex items-center`}
+          className={`w-full p-4 rounded-lg shadow hover:border-[#E67012] border border-transparent transition-all duration-300 flex items-center text-sm`}
           style={{ 
             backgroundColor: isDarkMode ? '#2E2E2E' : '#FFFFFF',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
@@ -190,8 +188,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
 
         {/* Manage Users */}
         <button 
-          className={`w-full p-4 rounded-lg shadow hover:border-[#E67012] border border-transparent 
-            transition-all duration-300 flex items-center`}
+          className={`w-full p-4 rounded-lg shadow hover:border-[#E67012] border border-transparent transition-all duration-300 flex items-center text-sm`}
           style={{ 
             backgroundColor: isDarkMode ? '#2E2E2E' : '#FFFFFF',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
@@ -204,7 +201,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
 
         {/* Deactivate Account */}
         <button 
-          className="w-full p-4 rounded-lg shadow transition-all duration-300 flex items-center justify-center space-x-2"
+          className="w-full p-4 rounded-lg shadow transition-all duration-300 flex items-center justify-center space-x-2 text-sm"
           style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
         >
           <i className="fas fa-user-slash"></i>
@@ -243,7 +240,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleCancelImage}
-                className="px-4 py-2 rounded-lg transition-colors"
+                className="px-4 py-2 rounded-lg transition-colors text-sm"
                 style={{ 
                   borderWidth: '1px',
                   borderColor: '#E5E7EB',
@@ -254,7 +251,7 @@ const Settings: React.FC<Props> = ({ isDarkMode, onProfileUpdate }) => {
               </button>
               <button
                 onClick={handleSaveImage}
-                className="px-4 py-2 text-white rounded-lg transition-colors"
+                className="px-4 py-2 text-white rounded-lg transition-colors text-sm"
                 style={{ backgroundColor: '#E67012' }}
               >
                 Save Changes

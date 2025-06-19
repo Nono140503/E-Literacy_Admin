@@ -43,7 +43,7 @@ const Login_SignUp: React.FC<LoginSignUpProps> = ({ onLogin }) => {
       setShowAlert(true);
       return;
     }
-
+    
     if (!isLogin) {
       if (!formData.username) {
         setValidationError("Username cannot be empty.");
