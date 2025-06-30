@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Login_SignUp from './Login_SignUp.tsx';
 import Home from './Home.tsx';
+import 'leaflet/dist/leaflet.css';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

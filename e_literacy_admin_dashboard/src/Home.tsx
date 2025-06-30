@@ -31,6 +31,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/autoplay';
 import Settings from './components/Settings.tsx';
 import PDFReport from './components/PDFReport.tsx';
+import UserInsightsMap from './components/UserInsightsMap';
 
 // Type definitions
 type NavItem = "Dashboard" | "Reports" | "User Insights" | "Settings";
@@ -81,6 +82,8 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
   const [notification, setNotification] = useState<NotificationState>({ show: false, message: '', type: '' });
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
   const [hoveredDropdown, setHoveredDropdown] = useState<{ type: string, value: string } | null>(null);
+  const lineChartRef = useRef<HTMLDivElement>(null);
+  const lineChartInstance = useRef<echarts.ECharts | null>(null);
 
   const navIcons: Record<NavItem, string> = {
     "Dashboard": "chart-line",
@@ -267,6 +270,128 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
       pieChartInstance.current?.dispose();
     };
   }, []);
+
+  useEffect(() => {
+    if (activeNav === 'User Insights') {
+      // Literacy Level Distribution (bar chart with gradient)
+      try {
+        if (barChartRef.current) {
+          if (barChartInstance.current) barChartInstance.current.dispose();
+          barChartInstance.current = echarts.init(barChartRef.current);
+          barChartInstance.current.setOption({
+            xAxis: { type: 'category', data: ['Beginner', 'Intermediate', 'Advanced'] },
+            yAxis: { type: 'value' },
+            series: [{
+              data: [8923, 10234, 5410],
+              type: 'bar',
+              itemStyle: {
+                color: {
+                  type: 'linear',
+                  x: 0,
+                  y: 0,
+                  x2: 0,
+                  y2: 1,
+                  colorStops: [
+                    { offset: 0, color: '#ff9800' },
+                    { offset: 1, color: '#E67012' },
+                  ],
+                },
+                borderRadius: [6, 6, 0, 0],
+              },
+            }],
+            tooltip: { trigger: 'axis' },
+            grid: { left: 40, right: 20, top: 30, bottom: 40 },
+          });
+        }
+      } catch (e) { console.error('Bar chart failed to render', e); }
+      // User Activity for the Month (line chart)
+      try {
+        if (lineChartRef.current) {
+          if (lineChartInstance.current) lineChartInstance.current.dispose();
+          // Delay initialization to ensure container is visible
+          setTimeout(() => {
+            if (!lineChartRef.current) return;
+            lineChartInstance.current = echarts.init(lineChartRef.current);
+            lineChartInstance.current.setOption({
+              xAxis: {
+                type: 'category',
+                data: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+              },
+              yAxis: { type: 'value' },
+              series: [{
+                data: [120, 180, 150, 210],
+                type: 'line',
+                smooth: true,
+                lineStyle: { color: '#3498db', width: 3 },
+                itemStyle: { color: '#3498db' },
+                areaStyle: { color: 'rgba(52, 152, 219, 0.15)' },
+              }],
+              tooltip: { trigger: 'axis' },
+              grid: { left: 40, right: 20, top: 30, bottom: 40 },
+            });
+            lineChartInstance.current.resize();
+          }, 100);
+        }
+      } catch (e) { console.error('Line chart failed to render', e); }
+      // Age Demographics (pie chart, match Home)
+      try {
+        if (pieChartRef.current) {
+          if (pieChartInstance.current) pieChartInstance.current.dispose();
+          pieChartInstance.current = echarts.init(pieChartRef.current);
+          pieChartInstance.current.setOption({
+            animation: false,
+            tooltip: {
+              trigger: 'item',
+              formatter: '{b}: {c} ({d}%)',
+              backgroundColor: isDarkMode ? 'rgba(50, 50, 50, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+              borderColor: isDarkMode ? '#555' : '#ddd',
+              textStyle: {
+                color: isDarkMode ? '#fff' : '#333'
+              }
+            },
+            legend: {
+              orient: 'vertical',
+              right: '5%',
+              top: 'center',
+              textStyle: {
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)'
+              }
+            },
+            series: [{
+              type: 'pie',
+              radius: ['40%', '70%'],
+              center: ['40%', '50%'],
+              avoidLabelOverlap: false,
+              itemStyle: {
+                borderRadius: 6,
+                borderColor: isDarkMode ? '#1F2937' : '#fff',
+                borderWidth: 2
+              },
+              label: {
+                show: false
+              },
+              emphasis: {
+                label: {
+                  show: true,
+                  fontSize: '14',
+                  fontWeight: 'bold'
+                }
+              },
+              labelLine: {
+                show: false
+              },
+              data: [
+                { value: 35, name: '18-25', itemStyle: { color: '#6366F1' } },
+                { value: 30, name: '26-35', itemStyle: { color: '#8B5CF6' } },
+                { value: 20, name: '36-45', itemStyle: { color: '#EC4899' } },
+                { value: 15, name: '46+', itemStyle: { color: '#F59E0B' } }
+              ]
+            }]
+          });
+        }
+      } catch (e) { console.error('Pie chart failed to render', e); }
+    }
+  }, [activeNav, isDarkMode]);
 
   const handleNavClick = (item: NavItem) => {
     setActiveNav(item);
@@ -644,6 +769,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
 
   // Function to render the active page content
   const renderActivePage = () => {
+    console.log('activeNav:', activeNav);
     switch (activeNav) {
       case 'Settings':
         return <Settings isDarkMode={isDarkMode} onProfileUpdate={handleProfileUpdate} />;
@@ -877,21 +1003,41 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               </button>
             </div>
 
-            {/* Recent Activity Section (below Download Report) */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 mb-10 text-sm" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff' } : {}}>
+            {/* User Activity Table */}
+            <div className={isDarkMode ? 'rounded-2xl shadow-lg p-8 mb-10 text-white' : 'bg-white rounded-2xl shadow-lg p-8 mb-10 text-sm'}
+                 style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : {}}>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold" style={isDarkMode ? { color: '#fff' } : { color: '#1a202c' }}>Recent Activity</h3>
+                <h3 className="text-lg font-bold">Recent User Activity</h3>
                 <button className="font-medium hover:underline text-sm" style={isDarkMode ? { color: '#ff9800' } : { color: '#e67012' }}>View All</button>
+              </div>
+              {/* Top User of the Week Highlight (inside Recent User Activity) */}
+              <div className={isDarkMode ? 'flex items-center bg-yellow-900/30 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full' : 'flex items-center bg-yellow-50 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full'}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                  <span role="img" aria-label="Trophy">🥇</span>
+                </div>
+                <div>
+                  <div className="flex items-center mb-1">
+                    <span className="text-base font-bold mr-2" style={{ color: '#ff9800' }}>
+                      Top User of the Week
+                    </span>
+                    <span className="text-xl">🏆</span>
+                  </div>
+                  <div className="flex items-center">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Top User" className="w-8 h-8 rounded-full border-2 border-yellow-400 mr-2" />
+                    <span className={isDarkMode ? 'font-semibold text-white' : 'font-semibold text-black'}>Sarah Johnson</span>
+                  </div>
+                  <div className={isDarkMode ? 'text-xs text-gray-200 mt-1' : 'text-xs text-gray-700 mt-1'}>Completed the most modules this week!</div>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr style={isDarkMode ? { color: '#e0e0e0' } : {}}>
-                      <th className="pb-3 font-medium text-left">User</th>
-                      <th className="pb-3 font-medium text-left">Activity</th>
-                      <th className="pb-3 font-medium text-left">Progress</th>
-                      <th className="pb-3 font-medium text-left">Date</th>
-                      <th className="pb-3 font-medium text-left">Status</th>
+                    <tr className="text-black">
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>User</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Activity</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Progress</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Date</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -914,7 +1060,12 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
                               {item.user.charAt(0)}
                             </div>
-                            <span className="ml-3 font-semibold" style={isDarkMode ? { color: '#fff' } : { color: '#1a202c' }}>{item.user}</span>
+                            <span className={isDarkMode ? 'ml-3 font-semibold text-white flex items-center' : 'ml-3 font-semibold text-black flex items-center'}>
+                              {idx === 0 && <span title="Top 1" className="mr-1">🥇</span>}
+                              {idx === 1 && <span title="Top 2" className="mr-1">🥈</span>}
+                              {idx === 2 && <span title="Top 3" className="mr-1">🥉</span>}
+                              {item.user}
+                            </span>
                           </div>
                         </td>
                         <td className="py-4 text-sm">{item.activity}</td>
@@ -923,10 +1074,159 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
                             <div className="flex-1 h-2 rounded-full mr-2 overflow-hidden" style={isDarkMode ? { background: '#b0b0b0' } : { background: '#e5e7eb' }}>
                               <div className="h-2 rounded-full bg-orange-500" style={{ width: `${item.progress}%` }}></div>
                             </div>
-                            <span className="ml-1 font-semibold text-sm mr-3" style={isDarkMode ? { color: '#fff' } : { color: '#1a202c' }}>{item.progress}%</span>
+                            <span className="ml-1 font-semibold text-sm mr-3">{item.progress}%</span>
                           </div>
                         </td>
-                        <td className="py-4 text-sm">{item.date}</td>
+                        <td className="py-4 text-sm text-black">{item.date}</td>
+                        <td className="py-4 text-sm">
+                          {item.status === 'Completed' && (
+                            <span style={isDarkMode ? { background: '#1e3a1e', color: '#7fffaf' } : { background: '#d1fae5', color: '#059669' }} className="px-3 py-1 rounded-full text-xs font-semibold text-sm">Completed</span>
+                          )}
+                          {item.status === 'In Progress' && (
+                            <span style={isDarkMode ? { background: '#3a2e1e', color: '#ffe680' } : { background: '#fef3c7', color: '#b45309' }} className="px-3 py-1 rounded-full text-xs font-semibold text-sm">In Progress</span>
+                          )}
+                          {item.status === 'New' && (
+                            <span style={isDarkMode ? { background: '#1e2740', color: '#a5b4fc' } : { background: '#dbeafe', color: '#2563eb' }} className="px-3 py-1 rounded-full text-xs font-semibold text-sm">New</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        );
+      case 'User Insights':
+        return (
+          <>
+            <div className={isDarkMode ? 'mb-5 text-white' : 'mb-5'}>
+              <h1 className={isDarkMode ? 'text-2xl font-bold mb-2 text-white' : 'text-2xl font-bold mb-2'}>User Insights</h1>
+            </div>
+            <UserInsightsMap isDarkMode={isDarkMode} />
+            {/* Detailed Graphs Section */}
+            <div className={isDarkMode ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 text-white' : 'grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8'}>
+              <div className={isDarkMode ? 'bg-[rgba(50,50,50,0.9)] rounded-xl shadow-lg p-6 flex flex-col text-white' : 'bg-white rounded-xl shadow-lg p-6 flex flex-col'}>
+                <h3 className={isDarkMode ? 'text-base font-bold mb-3 text-white' : 'text-base font-bold mb-3'}>Literacy Level Distribution</h3>
+                <div ref={barChartRef} style={{ height: '250px', width: '100%', minHeight: '250px', minWidth: '200px' }}></div>
+              </div>
+              <div className={isDarkMode ? 'bg-[rgba(50,50,50,0.9)] rounded-xl shadow-lg p-6 flex flex-col text-white' : 'bg-white rounded-xl shadow-lg p-6 flex flex-col'}>
+                <h3 className={isDarkMode ? 'text-base font-bold mb-3 text-white' : 'text-base font-bold mb-3'}>User Activity for the Month</h3>
+                <div ref={lineChartRef} style={{ height: '250px', width: '100%', minHeight: '250px', minWidth: '200px' }}></div>
+              </div>
+            </div>
+            {/* Standalone Pie Chart Section */}
+            <div className={isDarkMode ? 'bg-[rgba(50,50,50,0.9)] rounded-xl shadow-lg p-6 flex flex-col mb-8 max-w-4xl w-full mx-auto text-white' : 'bg-white rounded-xl shadow-lg p-6 flex flex-col mb-8 max-w-4xl w-full mx-auto'}>
+              <h3 className={isDarkMode ? 'text-base font-bold mb-3 text-white' : 'text-base font-bold mb-3'}>Age Demographics</h3>
+              <div ref={pieChartRef} style={{ height: '350px', width: '100%', minHeight: '350px', minWidth: '300px' }}></div>
+            </div>
+            {/* Inactive Users / Danger Zone */}
+            <div className={isDarkMode ? 'bg-red-900/40 rounded-xl shadow-lg p-6 mb-10 text-white' : 'bg-red-50 rounded-xl shadow-lg p-6 mb-10'}>
+              <h2 className={isDarkMode ? 'text-lg font-bold mb-4 text-white' : 'text-lg font-bold mb-4 text-red-600'}>Inactive Users / Danger Zone</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>User</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Last Activity</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-red-200">
+                    {[
+                      { user: 'Nomsa Dlamini', last: '2024-05-01', status: 'Inactive 30+ days' },
+                      { user: 'Thabo Mokoena', last: '2024-05-10', status: 'Inactive 20+ days' },
+                      { user: 'Lerato Khumalo', last: '2024-05-15', status: 'Inactive 15+ days' },
+                      { user: 'Sipho Ndlovu', last: '2024-05-18', status: 'Inactive 10+ days' },
+                      { user: 'Zanele Mthembu', last: '2024-05-20', status: 'Inactive 7+ days' },
+                    ].map((item, idx) => (
+                      <tr key={idx}>
+                        <td className={isDarkMode ? 'py-3 font-semibold text-white' : 'py-3 font-semibold text-black'}>{item.user}</td>
+                        <td className={isDarkMode ? 'py-3 text-white' : 'py-3 text-black'}>{item.last}</td>
+                        <td className="py-3">
+                          <span className="bg-red-200 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">{item.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {/* User Activity Table */}
+            <div className={isDarkMode ? 'rounded-2xl shadow-lg p-8 mb-10 text-white' : 'bg-white rounded-2xl shadow-lg p-8 mb-10 text-sm'}
+                 style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : {}}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold">Recent User Activity</h3>
+                <button className="font-medium hover:underline text-sm" style={isDarkMode ? { color: '#ff9800' } : { color: '#e67012' }}>View All</button>
+              </div>
+              {/* Top User of the Week Highlight (inside Recent User Activity) */}
+              <div className={isDarkMode ? 'flex items-center bg-yellow-900/30 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full' : 'flex items-center bg-yellow-50 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full'}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                  <span role="img" aria-label="Trophy">🥇</span>
+                </div>
+                <div>
+                  <div className="flex items-center mb-1">
+                    <span className="text-base font-bold mr-2" style={{ color: '#ff9800' }}>
+                      Top User of the Week
+                    </span>
+                    <span className="text-xl">🏆</span>
+                  </div>
+                  <div className="flex items-center">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Top User" className="w-8 h-8 rounded-full border-2 border-yellow-400 mr-2" />
+                    <span className={isDarkMode ? 'font-semibold text-white' : 'font-semibold text-black'}>Sarah Johnson</span>
+                  </div>
+                  <div className={isDarkMode ? 'text-xs text-gray-200 mt-1' : 'text-xs text-gray-700 mt-1'}>Completed the most modules this week!</div>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-black">
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>User</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Activity</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Progress</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Date</th>
+                      <th className={isDarkMode ? 'pb-3 font-medium text-left text-white' : 'pb-3 font-medium text-left text-black'}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {[
+                      { user: 'Sarah Johnson', activity: 'Completed Module 3', progress: 75, date: '2025-06-15', status: 'Completed' },
+                      { user: 'Michael Brown', activity: 'Started Assessment', progress: 45, date: '2025-06-14', status: 'In Progress' },
+                      { user: 'Emily Davis', activity: 'Joined Program', progress: 10, date: '2025-06-13', status: 'New' },
+                      { user: 'David Wilson', activity: 'Completed Module 2', progress: 60, date: '2025-06-12', status: 'Completed' }
+                    ].map((item, idx) => (
+                      <tr
+                        key={idx}
+                        style={isDarkMode ? {
+                          background: 'rgba(50,50,50,0.0)',
+                          color: '#fff',
+                          borderBottom: '1px solid #333'
+                        } : {}}
+                      >
+                        <td className="py-4 text-sm">
+                          <div className="flex items-center">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                              {item.user.charAt(0)}
+                            </div>
+                            <span className={isDarkMode ? 'ml-3 font-semibold text-white flex items-center' : 'ml-3 font-semibold text-black flex items-center'}>
+                              {idx === 0 && <span title="Top 1" className="mr-1">🥇</span>}
+                              {idx === 1 && <span title="Top 2" className="mr-1">🥈</span>}
+                              {idx === 2 && <span title="Top 3" className="mr-1">🥉</span>}
+                              {item.user}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-sm">{item.activity}</td>
+                        <td className="py-4 text-sm">
+                          <div className="flex items-center min-w-[120px]">
+                            <div className="flex-1 h-2 rounded-full mr-2 overflow-hidden" style={isDarkMode ? { background: '#b0b0b0' } : { background: '#e5e7eb' }}>
+                              <div className="h-2 rounded-full bg-orange-500" style={{ width: `${item.progress}%` }}></div>
+                            </div>
+                            <span className="ml-1 font-semibold text-sm mr-3">{item.progress}%</span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-sm text-black">{item.date}</td>
                         <td className="py-4 text-sm">
                           {item.status === 'Completed' && (
                             <span style={isDarkMode ? { background: '#1e3a1e', color: '#7fffaf' } : { background: '#d1fae5', color: '#059669' }} className="px-3 py-1 rounded-full text-xs font-semibold text-sm">Completed</span>
