@@ -3,7 +3,8 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { Circle as LeafletCircle, Tooltip as LeafletTooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-
+// OpenCage API key (for real geocoding):
+// const OPENCAGE_API_KEY = '24c40a037e7a47ea882bc3058783262d';
 
 type User = { name: string; coords: [number, number] };
 
