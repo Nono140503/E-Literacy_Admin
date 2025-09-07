@@ -32,9 +32,10 @@ import 'swiper/css/autoplay';
 import Settings from './components/Settings.tsx';
 import PDFReport from './components/PDFReport.tsx';
 import UserInsightsMap from './components/UserInsightsMap';
+import ManageCourses from './components/ManageCourses';
 
 // Type definitions
-type NavItem = "Dashboard" | "Reports" | "User Insights" | "Settings";
+type NavItem = "Dashboard" | "Reports" | "User Insights" | "Settings" | "Manage Courses";
 
 interface HomeProps {
   onLogout: () => void;
@@ -60,13 +61,31 @@ interface Stats {
     advancedLevel: number;
 }
 
+const sidebarGradientColors = [
+  '#EC643A', '#EB6937', '#EA6E34', '#E97331', '#E8772E', '#E77C2B', '#E68128'
+];
 const newGradientStyle = {
-  background: 'linear-gradient(to bottom, #ff9800, #ff512f)',
+  background: `linear-gradient(to bottom, ${sidebarGradientColors.join(', ')})`,
 };
 
 const Home: React.FC<HomeProps> = ({ onLogout }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(true);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Auto-collapse sidebar when not hovered
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+    const handleMouseEnter = () => setIsMenuCollapsed(false);
+    const handleMouseLeave = () => setIsMenuCollapsed(true);
+    sidebar.addEventListener('mouseenter', handleMouseEnter);
+    sidebar.addEventListener('mouseleave', handleMouseLeave);
+    return () => {
+      sidebar.removeEventListener('mouseenter', handleMouseEnter);
+      sidebar.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
   const [selectedProvince, setSelectedProvince] = useState('All Provinces');
   const [selectedAge, setSelectedAge] = useState('All Ages');
   const [selectedSkill, setSelectedSkill] = useState('All Levels');
@@ -169,16 +188,26 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
           barWidth: '50%',
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#f7b733' },
-              { offset: 1, color: '#fc4a1a' }
+              { offset: 0, color: sidebarGradientColors[0] },
+              { offset: 0.16, color: sidebarGradientColors[1] },
+              { offset: 0.33, color: sidebarGradientColors[2] },
+              { offset: 0.5, color: sidebarGradientColors[3] },
+              { offset: 0.66, color: sidebarGradientColors[4] },
+              { offset: 0.83, color: sidebarGradientColors[5] },
+              { offset: 1, color: sidebarGradientColors[6] }
             ]),
             borderRadius: [4, 4, 0, 0]
           },
           emphasis: {
             itemStyle: {
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: '#e0a62e' },
-                { offset: 1, color: '#e33f16' }
+                { offset: 0, color: sidebarGradientColors[0] },
+                { offset: 0.16, color: sidebarGradientColors[1] },
+                { offset: 0.33, color: sidebarGradientColors[2] },
+                { offset: 0.5, color: sidebarGradientColors[3] },
+                { offset: 0.66, color: sidebarGradientColors[4] },
+                { offset: 0.83, color: sidebarGradientColors[5] },
+                { offset: 1, color: sidebarGradientColors[6] }
               ])
             }
           }
@@ -292,8 +321,13 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
                   x2: 0,
                   y2: 1,
                   colorStops: [
-                    { offset: 0, color: '#ff9800' },
-                    { offset: 1, color: '#E67012' },
+                    { offset: 0, color: sidebarGradientColors[0] },
+                    { offset: 0.16, color: sidebarGradientColors[1] },
+                    { offset: 0.33, color: sidebarGradientColors[2] },
+                    { offset: 0.5, color: sidebarGradientColors[3] },
+                    { offset: 0.66, color: sidebarGradientColors[4] },
+                    { offset: 0.83, color: sidebarGradientColors[5] },
+                    { offset: 1, color: sidebarGradientColors[6] }
                   ],
                 },
                 borderRadius: [6, 6, 0, 0],
@@ -773,6 +807,8 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
     switch (activeNav) {
       case 'Settings':
         return <Settings isDarkMode={isDarkMode} onProfileUpdate={handleProfileUpdate} />;
+      case 'Manage Courses':
+        return <ManageCourses isDarkMode={isDarkMode} />;
       case 'Dashboard':
         return (
           <>
@@ -780,7 +816,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
             <div
               className="mb-8 rounded-xl p-6 shadow-lg"
               style={{
-                background: 'linear-gradient(to right, #ff9800, #ff512f)',
+                background: `linear-gradient(to right, ${sidebarGradientColors.join(', ')})`,
               }}
             >
               <div className="flex flex-col md:flex-row justify-between items-center">
@@ -869,7 +905,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(showDropdown === 'province' ? null : 'province')}
-                  className="flex items-center px-5 py-3 rounded-xl shadow border border-gray-200 focus:outline-none min-w-[200px] text-sm"
+                  className="flex items-center px-5 py-2 rounded-md border border-gray-200 focus:outline-none min-w-[200px] text-sm"
                   style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}
                 >
                   <span className="font-medium mr-1">Province:</span>
@@ -901,7 +937,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(showDropdown === 'age' ? null : 'age')}
-                  className="flex items-center px-5 py-3 rounded-xl shadow border border-gray-200 focus:outline-none min-w-[200px] text-sm"
+                  className="flex items-center px-5 py-2 rounded-md border border-gray-200 focus:outline-none min-w-[200px] text-sm"
                   style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}
                 >
                   <span className="font-medium mr-1">Age Range:</span>
@@ -933,7 +969,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(showDropdown === 'skill' ? null : 'skill')}
-                  className="flex items-center px-5 py-3 rounded-xl shadow border border-gray-200 focus:outline-none min-w-[200px] text-sm"
+                  className="flex items-center px-5 py-2 rounded-md border border-gray-200 focus:outline-none min-w-[200px] text-sm"
                   style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)', color: '#fff', borderColor: '#333' } : { background: '#fff', color: '#222' }}
                 >
                   <span className="font-medium mr-1">Skill Level:</span>
@@ -977,11 +1013,11 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-              <div className="p-6 rounded-xl shadow-lg mb-8" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
+              <div className="p-6 rounded-md shadow-sm mb-8" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
                 <h3 className="text-base font-bold mb-3">Literacy Level Distribution</h3>
                 <div ref={barChartRef} style={{ height: '250px' }}></div>
               </div>
-              <div className="p-6 rounded-xl shadow-lg mb-8" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
+              <div className="p-6 rounded-md shadow-sm mb-8" style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : { background: '#fff' }}>
                 <h3 className="text-base font-bold mb-3">Age Demographics</h3>
                 <div ref={pieChartRef} style={{ height: '250px' }}></div>
               </div>
@@ -1004,7 +1040,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
             </div>
 
             {/* User Activity Table */}
-            <div className={isDarkMode ? 'rounded-2xl shadow-lg p-8 mb-10 text-white' : 'bg-white rounded-2xl shadow-lg p-8 mb-10 text-sm'}
+            <div className={isDarkMode ? ' p-8 rounded-md  p-8 mb-10 text-white' : 'bg-white p-8 mb-10 text-sm rounded-md'}
                  style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : {}}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold">Recent User Activity</h3>
@@ -1012,7 +1048,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               </div>
               {/* Top User of the Week Highlight (inside Recent User Activity) */}
               <div className={isDarkMode ? 'flex items-center bg-yellow-900/30 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full' : 'flex items-center bg-yellow-50 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full'}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4" style={{ background: `linear-gradient(135deg, ${sidebarGradientColors.join(', ')})` }}>
                   <span role="img" aria-label="Trophy">🥇</span>
                 </div>
                 <div>
@@ -1057,7 +1093,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
                       >
                         <td className="py-4 text-sm">
                           <div className="flex items-center">
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: `linear-gradient(135deg, ${sidebarGradientColors.join(', ')})` }}>
                               {item.user.charAt(0)}
                             </div>
                             <span className={isDarkMode ? 'ml-3 font-semibold text-white flex items-center' : 'ml-3 font-semibold text-black flex items-center'}>
@@ -1153,7 +1189,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               </div>
             </div>
             {/* User Activity Table */}
-            <div className={isDarkMode ? 'rounded-2xl shadow-lg p-8 mb-10 text-white' : 'bg-white rounded-2xl shadow-lg p-8 mb-10 text-sm'}
+            <div className={isDarkMode ? ' p-8 mb-10 text-white' : 'bg-white rounded-md shadow-md p-8 mb-10 text-sm'}
                  style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : {}}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold">Recent User Activity</h3>
@@ -1161,7 +1197,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               </div>
               {/* Top User of the Week Highlight (inside Recent User Activity) */}
               <div className={isDarkMode ? 'flex items-center bg-yellow-900/30 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full' : 'flex items-center bg-yellow-50 border-l-8 border-yellow-400 rounded-xl p-4 mb-6 max-w-xl w-full'}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4" style={{ background: `linear-gradient(135deg, ${sidebarGradientColors.join(', ')})` }}>
                   <span role="img" aria-label="Trophy">🥇</span>
                 </div>
                 <div>
@@ -1206,7 +1242,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
                       >
                         <td className="py-4 text-sm">
                           <div className="flex items-center">
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: 'linear-gradient(135deg, #ff9800 0%, #ff512f 100%)' }}>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: `linear-gradient(135deg, ${sidebarGradientColors.join(', ')})` }}>
                               {item.user.charAt(0)}
                             </div>
                             <span className={isDarkMode ? 'ml-3 font-semibold text-white flex items-center' : 'ml-3 font-semibold text-black flex items-center'}>
@@ -1263,17 +1299,15 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
       }}
     >
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full ${isMenuCollapsed ? 'w-15' : 'w-64'} transition-all duration-300 shadow-xl z-50 text-sm`} style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : newGradientStyle}>
+      <div
+        ref={sidebarRef}
+  className={`fixed left-0 top-0 h-full ${isMenuCollapsed ? 'w-12' : 'w-48'} transition-all duration-300 shadow-xl z-50 text-sm`}
+        style={isDarkMode ? { background: 'rgba(50, 50, 50, 0.9)' } : newGradientStyle}
+      >
         <div className="p-2 flex items-center justify-between">
           <div className="flex items-center">
             {!isMenuCollapsed && <span className="text-white font-bold ml-5 text-lg mt-5">E-Literacy</span>}
           </div>
-          <button
-            onClick={() => setIsMenuCollapsed(!isMenuCollapsed)}
-            className="text-gray-300 hover:text-white cursor-pointer p-1 rounded-full hover:bg-white/10 transition-all"
-          >
-            <FontAwesomeIcon icon={isMenuCollapsed ? faChevronRight : faChevronLeft} />
-          </button>
         </div>
         <div className="mt-8 flex flex-col h-[calc(100vh-8rem)] justify-between text-sm">
           <div>
@@ -1281,6 +1315,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               { name: 'Dashboard', icon: faChartLine },
               { name: 'Reports', icon: faFileAlt },
               { name: 'User Insights', icon: faLightbulb },
+              { name: 'Manage Courses', icon: faUsers },
               { name: 'Settings', icon: faCog }
             ].map((item) => (
               <div
@@ -1312,7 +1347,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
 
       {/* Main Content */}
       <div
-        className={`${isMenuCollapsed ? 'ml-20' : 'ml-64'} pl-8 pr-8 transition-all duration-300 text-base`}
+  className={`${isMenuCollapsed ? 'ml-12' : 'ml-48'} pl-8 pr-8 transition-all duration-300 text-base`}
         style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}
       >
         {/* Header */}
