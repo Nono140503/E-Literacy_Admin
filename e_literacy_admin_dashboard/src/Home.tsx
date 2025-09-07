@@ -33,6 +33,7 @@ import Settings from './components/Settings.tsx';
 import PDFReport from './components/PDFReport.tsx';
 import UserInsightsMap from './components/UserInsightsMap';
 import ManageCourses from './components/ManageCourses';
+import ManageUsers from './components/ManageUsers';
 
 // Type definitions
 type NavItem = "Dashboard" | "Reports" | "User Insights" | "Settings" | "Manage Courses";
@@ -103,6 +104,22 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
   const [hoveredDropdown, setHoveredDropdown] = useState<{ type: string, value: string } | null>(null);
   const lineChartRef = useRef<HTMLDivElement>(null);
   const lineChartInstance = useRef<echarts.ECharts | null>(null);
+  const [route, setRoute] = useState(window.location.hash);
+  const [lastLogin, setLastLogin] = useState<string>('');
+
+  // Set last login time when component mounts (simulating login time)
+  useEffect(() => {
+    const now = new Date();
+    const formattedTime = now.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    setLastLogin(formattedTime);
+  }, []);
 
   const navIcons: Record<NavItem, string> = {
     "Dashboard": "chart-line",
@@ -1282,10 +1299,18 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
             </div>
           </>
         );
+      case 'Manage Users':
+        return <ManageUsers />;
       default:
         return <div className="p-6">Page under construction</div>;
     }
   };
+
+  useEffect(() => {
+    const onHashChange = () => setRoute(window.location.hash);
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   return (
     <div
@@ -1320,7 +1345,14 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
             ].map((item) => (
               <div
                 key={item.name}
-                onClick={() => setActiveNav(item.name as NavItem)}
+                onClick={() => {
+                  setActiveNav(item.name as NavItem);
+                  // Clear hash route when switching main navigation
+                  if (window.location.hash) {
+                    window.location.hash = '';
+                    setRoute('');
+                  }
+                }}
                 className={`px-4 py-3 flex items-center cursor-pointer transition-all duration-200 rounded-lg mb-2
                   ${activeNav === item.name ? (isDarkMode ? 'bg-white/20 border-l-4' : 'bg-white/20 border-l-4 border-yellow-400') + ' text-white font-bold shadow' : 'text-gray-100 hover:bg-white/10'}
                   ${isMenuCollapsed ? 'justify-center' : ''}`}
@@ -1357,7 +1389,7 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
               <img src={profileImage} alt="Profile" className="w-10 h-10 rounded-full border-2 border-[#E67012]" id='profile-image'/>
               <div>
                 <h2 className="text-lg font-bold">Alexander Mitchell</h2>
-                <p className="text-xs text-gray-500">Administrator | Last login: 2025-04-20</p>
+                <p className="text-xs text-gray-500">Administrator | Last login: {lastLogin}</p>
               </div>
             </div>
           )}
@@ -1369,7 +1401,11 @@ const Home: React.FC<HomeProps> = ({ onLogout }) => {
         </div>
 
         {/* Dynamic Content */}
-        {renderActivePage()}
+        {route === '#/manage-users' && activeNav === 'User Insights' ? (
+          <ManageUsers />
+        ) : (
+          renderActivePage()
+        )}
       </div>
 
       {/* Export Modal */}

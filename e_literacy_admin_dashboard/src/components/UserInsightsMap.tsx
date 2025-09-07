@@ -434,6 +434,16 @@ const UserInsightsMap: React.FC<UserInsightsMapProps> = ({ isDarkMode }) => {
           </div>
         )}
       </div>
+      {/* Manage Users button below map and legend */}
+      <div className="flex justify-center mt-6">
+        <button
+          className="px-6 py-2 rounded-lg font-semibold text-white shadow-md"
+          style={{ background: '#e67012' }}
+          onClick={() => window.location.hash = '#/manage-users'}
+        >
+          Manage Users
+        </button>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ const approvedCourses = [
     name: 'Digital Literacy Basics',
     cover: '/src/assets/1.jpg',
     details: 'Learn the basics of digital literacy.',
+    practitioner: 'Dr. Jane Smith', // TODO: Replace with practitioner data from database
     category: 'digital-literacy',
     difficulty: 'beginner',
     duration: 6,
@@ -44,6 +45,7 @@ const approvedCourses = [
     name: 'Advanced Internet Skills',
     cover: '/src/assets/3.jpg',
     details: 'Master advanced internet usage.',
+    practitioner: 'Dr. John Doe', // TODO: Replace with practitioner data from database
     category: 'computer-skills',
     difficulty: 'advanced',
     duration: 8,
@@ -57,6 +59,7 @@ const approvedCourses = [
     name: 'Safe Online Practices',
     cover: '/src/assets/2.jpg',
     details: 'Stay safe online with best practices.',
+    practitioner: 'Prof. Mary Johnson', // TODO: Replace with practitioner data from database
     category: 'internet-safety',
     difficulty: 'intermediate',
     duration: 4,
@@ -70,6 +73,7 @@ const approvedCourses = [
     name: 'Social Media Essentials',
     cover: '/src/assets/4.jpg',
     details: 'Navigate social media platforms.',
+    practitioner: 'Dr. David Wilson', // TODO: Replace with practitioner data from database
     category: 'mobile-tech',
     difficulty: 'beginner',
     duration: 3,
@@ -83,6 +87,7 @@ const approvedCourses = [
     name: 'Remote Work Tools',
     cover: '/src/assets/edu.gif',
     details: 'Get familiar with remote work tools.',
+    practitioner: 'Dr. Alice Brown', // TODO: Replace with practitioner data from database
     category: 'software',
     difficulty: 'intermediate',
     duration: 5,
@@ -94,15 +99,21 @@ const approvedCourses = [
 ];
 // TODO: Replace with API call to fetch pending courses from the database
 const pendingCourses = [
-  { id: 6, name: 'Mobile Literacy', cover: '/src/assets/education-mobile-ezgif.com-gif-maker.gif', details: 'Mobile device basics.' },
-  { id: 7, name: 'Cloud Computing', cover: '/src/assets/react.svg', details: 'Introduction to cloud computing.' },
+  { id: 6, name: 'Mobile Literacy', cover: '/src/assets/education-mobile-ezgif.com-gif-maker.gif', details: 'Mobile device basics.', practitioner: 'Sarah Martinez' }, // TODO: Replace with practitioner data from database
+  { id: 7, name: 'Cloud Computing', cover: '/src/assets/react.svg', details: 'Introduction to cloud computing.', practitioner: 'Mike Chen' }, // TODO: Replace with practitioner data from database
 ];
 // TODO: Replace with API call to fetch rejected courses from the database
 const rejectedCourses = [
-  { id: 8, name: 'Unverified Course', cover: '/src/assets/Logo.jpg', details: 'Course did not meet requirements.' },
+  { id: 8, name: 'Unverified Course', cover: '/src/assets/Logo.jpg', details: 'Course did not meet requirements.', practitioner: 'John Smith' }, // TODO: Replace with practitioner data from database
 ];
 
-function CourseGrid({ courses, status }: { courses: any[]; status: string }) {
+function CourseGrid({ courses, status, onApprove, onReject, onDelete }: { 
+  courses: any[]; 
+  status: string; 
+  onApprove?: (id: number) => void;
+  onReject?: (id: number) => void;
+  onDelete?: (id: number) => void;
+}) {
   return (
     <div className="mb-8">
       <h2 className="text-lg font-bold mb-4" style={{ color: 'inherit' }}>{status}</h2>
@@ -118,8 +129,17 @@ function CourseGrid({ courses, status }: { courses: any[]; status: string }) {
                 {/* TODO: Replace course.name and course.details with values from the database */}
                 <h3 className="font-semibold text-white text-base mb-1 dark:text-black">{course.name}</h3>
                 <p className="text-sm text-gray-500 mb-2">{course.details}</p>
-                <div className="mt-auto flex justify-end">
+                <div className="mt-auto flex justify-end gap-2">
                   <button className="px-4 py-2 text-xs rounded bg-blue-500 text-white hover:bg-blue-600 transition" onClick={() => course.onView(course)}>View</button>
+                  {onApprove && onReject && (
+                    <>
+                      <button className="px-3 py-2 text-xs rounded bg-green-500 text-white hover:bg-green-600 transition" onClick={() => onApprove(course.id)}>Approve</button>
+                      <button className="px-3 py-2 text-xs rounded bg-red-500 text-white hover:bg-red-600 transition" onClick={() => onReject(course.id)}>Reject</button>
+                    </>
+                  )}
+                  {onDelete && (
+                    <button className="px-3 py-2 text-xs rounded bg-gray-500 text-white hover:bg-gray-600 transition" onClick={() => onDelete(course.id)}>Delete</button>
+                  )}
                 </div>
               </div>
             </div>
@@ -132,6 +152,65 @@ function CourseGrid({ courses, status }: { courses: any[]; status: string }) {
 
 export default function ManageCourses({ isDarkMode }: { isDarkMode: boolean }) {
   const [viewCourse, setViewCourse] = useState<any | null>(null);
+  const [approved, setApproved] = useState(approvedCourses);
+  const [pending, setPending] = useState(pendingCourses);
+  const [rejected, setRejected] = useState(rejectedCourses);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+  const [modalAction, setModalAction] = useState<'approve' | 'reject' | 'delete'>('approve');
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<any | null>(null);
+
+  // TODO: Replace these handlers with API calls to update course status in database
+  const handleApproveCourse = (courseId: number) => {
+    const course = pending.find(c => c.id === courseId);
+    if (course) {
+      setApproved([...approved, { ...course, status: 'approved' }]);
+      setPending(pending.filter(c => c.id !== courseId));
+      setModalMessage(`Course "${course.name}" has been approved.`);
+      setModalType('success');
+      setModalAction('approve');
+      setShowModal(true);
+    }
+  };
+
+  const handleRejectCourse = (courseId: number) => {
+    const course = pending.find(c => c.id === courseId);
+    if (course) {
+      setRejected([...rejected, { ...course, status: 'rejected' }]);
+      setPending(pending.filter(c => c.id !== courseId));
+      setModalMessage(`Course "${course.name}" has been rejected.`);
+      setModalType('error');
+      setModalAction('reject');
+      setShowModal(true);
+    }
+  };
+
+  const handleDeleteCourse = (courseId: number) => {
+    const course = approved.find(c => c.id === courseId);
+    if (course) {
+      setCourseToDelete(course);
+      setShowConfirmDelete(true);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (courseToDelete) {
+      setApproved(approved.filter(c => c.id !== courseToDelete.id));
+      setModalMessage(`Course "${courseToDelete.name}" has been deleted.`);
+      setModalType('success');
+      setModalAction('delete');
+      setShowModal(true);
+      setShowConfirmDelete(false);
+      setCourseToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmDelete(false);
+    setCourseToDelete(null);
+  };
 
   // Helper to render tags
   // TODO: Replace tags with values from the database
@@ -209,7 +288,11 @@ export default function ManageCourses({ isDarkMode }: { isDarkMode: boolean }) {
   };
 
   // Modal backdrop and content
-  const CourseModal = ({ course, onClose }: { course: any, onClose: () => void }) => (
+  const CourseModal = ({ course, onClose, onDelete }: { 
+    course: any, 
+    onClose: () => void,
+    onDelete?: (id: number) => void
+  }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
       <div className="relative bg-[#f7f7fa] rounded-md shadow-lg max-w-2xl w-full mx-4 max-h-[100vh] overflow-y-auto  z-10">
@@ -223,6 +306,8 @@ export default function ManageCourses({ isDarkMode }: { isDarkMode: boolean }) {
           <div></div>
           <h2 className="text-2xl font-bold mb-2 text-center text-gray-900 ">{course.name || 'Not provided'}</h2>
           <p className="text-base text-gray-600  mb-2 text-center">{course.details || 'Not provided'}</p>
+          {/* TODO: Replace with practitioner data from database */}
+          <p className="text-sm text-blue-600 font-medium text-center mb-4">Created by: {course.practitioner || 'Unknown Practitioner'}</p>
         </div>
         <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4 px-5">
           <div><span className="font-semibold">Category:</span> {course.category || <span className="text-gray-400 italic">Not provided</span>}</div>
@@ -259,6 +344,21 @@ export default function ManageCourses({ isDarkMode }: { isDarkMode: boolean }) {
             </div>
           )) : <div className="text-gray-400 italic">No weeks added</div>}
         </div>
+        
+        {/* TODO: Replace with API call to delete course from database */}
+        {onDelete && (
+          <div className="px-5 pb-5">
+            <button
+              onClick={() => {
+                onDelete(course.id);
+                onClose();
+              }}
+              className="w-full py-2 px-4 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+            >
+              Delete Course
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -273,10 +373,100 @@ export default function ManageCourses({ isDarkMode }: { isDarkMode: boolean }) {
         (isDarkMode ? ' text-white' : ' text-black')
       }
     >
-      <CourseGrid courses={courseGridProps(approvedCourses)} status="Approved Courses" />
-      <CourseGrid courses={courseGridProps(pendingCourses)} status="Pending Approval" />
-      <CourseGrid courses={courseGridProps(rejectedCourses)} status="Rejected" />
-      {viewCourse && <CourseModal course={viewCourse} onClose={() => setViewCourse(null)} />}
+      <CourseGrid 
+        courses={courseGridProps(approved)} 
+        status="Approved Courses" 
+        onDelete={handleDeleteCourse}
+      />
+      <CourseGrid 
+        courses={courseGridProps(pending)} 
+        status="Pending Approval" 
+        onApprove={handleApproveCourse}
+        onReject={handleRejectCourse}
+      />
+      <CourseGrid 
+        courses={courseGridProps(rejected)} 
+        status="Rejected" 
+      />
+      {viewCourse && (
+        <CourseModal 
+          course={viewCourse} 
+          onClose={() => setViewCourse(null)} 
+          onDelete={approved.some(c => c.id === viewCourse.id) ? handleDeleteCourse : undefined}
+        />
+      )}
+
+      {/* Approval/Rejection Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-lg max-w-md w-full mx-4 p-6 z-10">
+            <div className="flex items-center justify-center mb-4">
+              {modalType === 'success' ? (
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </div>
+              )}
+            </div>
+            <h3 className={`text-lg font-semibold text-center mb-2 ${modalType === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+              {modalAction === 'approve' ? 'Course Approved' : modalAction === 'reject' ? 'Course Rejected' : 'Course Deleted'}
+            </h3>
+            <p className="text-gray-600 text-center mb-6">{modalMessage}</p>
+            <button
+              onClick={() => setShowModal(false)}
+              className={`w-full py-2 px-4 rounded-lg font-semibold text-white ${
+                modalType === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showConfirmDelete && courseToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={cancelDelete} />
+          <div className="relative bg-white rounded-xl shadow-lg max-w-md w-full mx-4 p-6 z-10">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-center mb-2 text-yellow-800">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-600 text-center mb-6">
+              Are you sure you want to delete the course "{courseToDelete.name}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 py-2 px-4 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-2 px-4 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
